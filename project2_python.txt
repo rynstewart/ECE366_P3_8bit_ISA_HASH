@@ -1,0 +1,758 @@
+# Authors: Matthew Braniff, Marah Abuhindi, Justin Lau
+# Version: Final
+
+# Some code used from Trung Le's assembler
+import time #This include is purely for debugging purposes
+
+#-------------------asm function definitions-------------------------#
+# This is all of our instruction functions
+def addi(instr,data):
+    data.write(instr.rt, data.read(instr.rs) + instr.imm) # rt = rs + imm
+   # print(convertToHex(str(data.read(instr.rs) + instr.imm)))
+    return
+
+def addu(instr,data):
+    rs = data.read(instr.rs)
+    rt = data.read(instr.rt)
+    if(rs < 0):
+        rs *= -1
+        rs = (rs^int("0xffffffff",16)) + 1
+    if(rt < 0):
+        rt *= -1
+        rt = (rs^int("0xffffffff",16)) + 1
+    data.write(instr.rd, rs + rt) # rd = rs + rt
+    return
+
+def addiu(instr,data):
+    if(instr.imm < 0):
+        mask = int("0xFFFF0000",16)
+        instr.imm *= -1
+        instr.imm = twosComp(instr.imm) | mask
+
+    data.write(instr.rt, data.read(instr.rs) + instr.imm) # rt = rs + imm
+    return
+
+def j(instr,data):
+    pc = format(data.read("pc"),'032b')
+    data.write("pc",(int(pc[0:6] + str(format(int(instr.jump), '026b')), 2))*4) # pc = int(pc[0:6] + str(imm))
+    return
+
+def lb(instr,data):
+    temp = stack.read(data.read(instr.rs) + instr.imm - int("0x2000",16))
+
+    mask = pow(2,7)
+    sign = temp & mask
+    if(sign):
+        mask = int("0xFFFFFF00",16)
+        result = temp | mask
+
+    else:
+        result = temp
+    data.write(instr.rt, result) # rt = imm(rs)
+
+    return
+
+def sb(instr,data):
+    temp= data.read(instr.rt) & 255
+    stack.write(data.read(instr.rs) + instr.imm - int("0x2000", 16), temp) # *(imm(rs)) = rt
+    return
+
+def lw(instr,data):
+    result = 0
+    for i in range(4):
+        temp = stack.read(data.read(instr.rs) + instr.imm + i - int("0x2000", 16)) << i*8
+        result += temp
+    data.write(instr.rt, result)
+    return
+
+def sw(instr,data):
+    mask = 255
+    for i in range(4):
+        temp = data.read(instr.rt)&(mask << i*8)
+        temp = temp >> i*8
+        stack.write(data.read(instr.rs) + instr.imm + i - int("0x2000",16), temp)
+    return
+
+def beq(instr,data):
+    if(data.read(instr.rs) == data.read(instr.rt)):
+        data.write("pc",data.read("pc") + (instr.imm * 4))
+    return
+
+def bne(instr,data):
+    if(data.read(instr.rs) != data.read(instr.rt)):
+        data.write("pc",data.read("pc") + (instr.imm * 4))
+    return
+
+def add(instr,data):
+    data.write(instr.rd, data.read(instr.rs) + data.read(instr.rt)) # rd = rs + rt
+    return
+
+def multu(instr,data):
+    mult1 = data.read(instr.rs)
+    mult2 = data.read(instr.rt)
+    if(mult1 < 0): # If the value is negative get the twos compliment
+        mult1 *= -1
+        mult1 = (mult1^(int("0xffffffff",16))) + 1
+    if(mult2 < 0): # If the value is negative get the twos compliment
+        mult2 *= -1
+        mult2 = (mult2^(int("0xffffffff",16))) + 1
+
+    result = mult1*mult2
+    data.write("hi",result>>32) # Save the upper 32 bits of the result into hi reg
+    data.write("lo",result&int("0xffffffff",16)) # Save the lower 32 bits of result into lo reg
+    return
+
+def mult(instr,data):
+    mult1 = data.read(instr.rs)
+    mult2 = data.read(instr.rt)
+    result = mult1*mult2
+    if(result < 0): # If the result is a negative value we have to get convert to the binary because python uses sign and mag
+        result *= -1
+        result = (result^int("0xffffffffffffffff",16)) + 1 # Twos compliment of a 64 bit number
+    data.write("hi",result>>32) # Save upper 32 bits of result into hi reg
+    data.write("lo",result&int("0xffffffff",16)) # Save lower 32 bits of result into lo reg
+    return
+
+def slt(instr,data):
+    data.write(instr.rd,(data.read(instr.rs) < data.read(instr.rt))) # rd = rs<rt
+    return
+
+def srl(instr,data):
+    temp = data.read(instr.rt)
+    if(temp < 0):
+        temp *= -1
+        temp = (temp^int("0xffffffff",16)) + 1
+    data.write(instr.rd,temp>>int(instr.sh)) # rd = rt >> shamt
+    return
+
+def sltu(instr,data):
+    temp1 = data.read(instr.rs)
+    temp2 = data.read(instr.rt)
+    if(temp1 < 0): # If the value is negative get the twos compliment
+        temp1 *= -1
+        temp1 = (temp2^(int("0xffffffff",16))) + 1
+    if(temp2 < 0): # If the value is negative get the twos compliment
+        temp2 *= -1
+        temp2 = (temp2^(int("0xffffffff",16))) + 1
+
+    data.write(instr.rd,(temp1 < temp2)) # rd = rs<rt
+    return
+
+def andi(instr,data):
+    imm = instr.imm
+    rs = data.read(instr.rs)
+    if(imm < 0):
+        imm *= -1
+        imm = twosComp(imm)
+    if(rs < 0):
+        rs *= -1
+        rs = (rs^int("0xffffffff",16)) + 1
+    data.write(instr.rt, rs&imm) # rt = rs&imm
+    return
+
+def lui(instr,data):
+    data.write(instr.rt,instr.imm<<16) # rt = imm<<16
+    return
+
+def ori(instr,data):
+    imm = instr.imm
+    rs = data.read(instr.rs)
+    if(imm < 0):
+        imm *= -1
+        imm = twosComp(imm)
+    if(rs < 0):
+        rs *= -1
+        rs = (rs^int("0xffffffff",16)) + 1
+    data.write(instr.rt, rs|imm) # rt = rs|imm
+    return
+
+def andd(instr,data):
+    rs = data.read(instr.rs)
+    rt = data.read(instr.rt)
+    if(rs < 0):
+        rs *= -1
+        rs = (rs^int("0xffffffff",16)) + 1
+    if(rt < 0):
+        rt *= -1
+        rt = (rt^int("0xffffffff",16)) + 1
+    data.write(instr.rd, rs&rt) # rt = rs&rt
+    return
+
+def mfhi(instr,data):
+    data.write(instr.rd,data.read("hi")) # rd = hi
+    return
+
+def mflo(instr,data):
+    data.write(instr.rd,data.read("lo")) # rd = lo
+    return
+
+def xor(instr,data):
+    rs = data.read(instr.rs)
+    rt = data.read(instr.rt)
+    if(rs < 0):
+        rs *= -1
+        rs = (rs^int("0xffffffff",16)) + 1
+    if(rt < 0):
+        rt *= -1
+        rt = (rs^int("0xffffffff",16)) + 1
+    data.write(instr.rd,rs^rt) # rd = rs^rt
+    return
+
+def multuxor(instr,data):
+    mult1 = data.read(instr.rs)
+    mult2 = data.read(instr.rt)
+
+    if(mult1 < 0): # If the value is negative get the twos compliment
+        mult1 *= -1
+        mult1 = (mult1^(int("0xffffffff",16))) + 1
+    if(mult2 < 0): # If the value is negative get the twos compliment
+        mult2 *= -1
+        mult2 = (mult2^(int("0xffffffff",16))) + 1
+
+    result = mult1*mult2
+
+    hi = result>>32 # Save the upper 32 bits of the result into hi
+    lo = result&int("0xffffffff",16) # Save the lower 32 bits of result into lo
+
+    data.write(instr.rd, hi ^ lo)
+
+    return
+
+
+#----------------------------------function dictionaries----------------------------------------#
+
+# Each function has an op code associated with it in machine language. These dictionaries will determine what function we
+# should call based on the binary op code.
+
+i_type_func_dict = { '001000':addi,
+                     '001001':addiu,
+                     '001100':andi,
+                     '001111':lui,
+                     '001101':ori,
+                     '000010':j,
+                     '100000':lb,
+                     '101000':sb,
+                     '100011':lw,
+                     '101011':sw,
+                     '000100':beq,
+                     '000101':bne,
+                     }
+
+r_type_func_dict = { '100000':add,
+                     '100001':addu,
+                     '100100':andd,
+                     '010000':mfhi,
+                     '010010':mflo,
+                     '100110':xor,
+                     '011001':multu,
+                     '011000':mult,
+                     '101010':slt,
+                     '000010':srl,
+                     '101011':sltu,
+                     '111111':multuxor
+                     }
+
+
+
+#-----------------------------Object definitions----------------------------------------------#
+
+class Stack():
+
+    def __init__(self):
+        self.stackList = []
+        for i in range(4096):
+            self.stackList.append(0)
+
+    def write(self, offset, value): # Save data into a specific position in stack
+        try:
+            self.stackList[offset] = value # Try saving data using integer offset
+        except:
+            self.stackList[int(offset,16)-int("2000",16)] = value # If offset is in hex convert it to int (assume we start at address 0x2000)
+
+    def read(self, offset): # Read byte from stack
+        try:
+            return self.stackList[offset]
+        except:
+            return self.stackList[int(offset,16)-int("2000",16)]
+
+
+# I am making our stack global to make it easier to access
+stack = Stack()
+
+
+
+# Registers class creates a object that holds all of our useable registers with write and read functions
+class Registers():
+
+    def __init__(self): # Initialize all of our registers to 0
+        self.regList = []
+        for i in range(16):
+            self.regList.append(0)
+        self.regZero = 0
+        self.regPC = 0
+        self.regLO = 0
+        self.regHI = 0
+
+    def write(self, register, value): # Save data into a register, takes a string (for reg) and integer (value)
+        if(register.isdigit()):
+            register = int(register)
+            if(register == 0):
+                self.regZero = 0
+            elif(register >= 8 and register <= 23):
+                self.regList[register-8] = value
+        else:
+            if(register == "pc"):
+                self.regPC = value
+            elif(register == 'lo'):
+                self.regLO = value
+            elif(register == 'hi'):
+                self.regHI = value
+
+    def read(self, register): # Read takes in a register (string) and returns the value stored in that reg
+        if(register.isdigit()):
+            register = int(register)
+            if(register == 0):
+                return self.regZero
+            elif(register >= 8 and register <= 23):
+                return self.regList[register-8]
+        else:
+            if(register == "pc"):
+                return self.regPC
+            elif(register == 'lo'):
+                return self.regLO
+            elif(register == 'hi'):
+                return self.regHI
+
+class Instruction():# Taking inspiration from Samantha Stephans homework 2 code
+    def __init__(self, hex_code):
+        self.binary_string = format(int(hex_code,16),'032b') #get a binary string of machine code
+
+        self.opcode = self.binary_string[0:6]
+        if (self.opcode == "000000"): # R type instruction
+            self.func = self.binary_string[26:32]
+            self.type = 'r'
+        else:
+            self.func = self.opcode
+            self.type = 'i'
+
+        # Even though each func may not have all these reg, we save them anyways to make life easier
+        self.rs = str(int(self.binary_string[6:11],2))
+        self.rt = str(int(self.binary_string[11:16], 2))
+        self.rd = str(int(self.binary_string[16:21], 2))
+        self.sh = str(int(self.binary_string[21:26], 2))
+        self.jump = str(int(self.binary_string[6:32], 2))
+
+        if self.binary_string[16] == '1': #check if immediate is negative
+            self.imm = -(twosComp(int(self.binary_string[16:32],2)))
+        else:
+            self.imm = int(self.binary_string[16:32],2)
+
+#---------------------------Helper Functions-------------------------------------#
+
+def twosComp(binVal): # Get the two's compliment of a value (16 bit)
+    binVal = binVal^65535
+    binVal += 1
+    return binVal
+
+def convertToHex(string): # Convert a binary string into hexadecimal
+    return format(int(string,2),'08x')
+
+
+#----------------------------Main funcitonality modules----------------------------#
+
+
+# Remember where each of the jump label is, and the target location
+def saveJumpLabel(asm,labelIndex, labelName):
+    lineCount = 0
+    index = 0
+    for line in asm:
+        line = line.replace(" ","")
+        if(line.count(":")):
+            labelName.append(line[0:line.index(":")]) # append the label name
+            labelIndex.append(lineCount) # append the label's index
+            asm[index] = line[line.index(":")+1:]
+            temp = asm[index]
+            if(temp == "\n"): # We should not increment our lineCount if a label is found on a line by itself
+                index += 1
+                continue
+        lineCount += 1
+        index += 1
+    for item in range(asm.count('\n')): # Remove all empty lines '\n'
+        asm.remove('\n')
+
+# Assemble will convert all of our assembly code in "mips.asm" into machine code and put it into a .txt file named "mc.txt" (hex output)
+def assemble():
+    labelIndex = []
+    labelName = []
+    f = open("mc.txt", "w+")
+    h = open("mips.asm", "r")
+    asm = h.readlines()
+    h.close()
+
+    currLine = 1
+
+    index = 0
+    for line in asm: #Remove all comments in code
+        asm[index], par, extra = asm[index].partition("#")
+        asm[index] = asm[index].replace('\n','') # Incase our deleting of comments got rid of a '\n'...
+        asm[index] += '\n' #... We will replace all the '\n' for every single line.
+        asm[index] = asm[index].replace("\t","")
+        index += 1
+
+
+    for item in range(asm.count('\n')): # Remove all empty lines '\n'
+        asm.remove('\n')
+
+
+    for item in range(asm.count('')): #Remove all blank lines left from removing comments
+        asm.remove('')
+
+    saveJumpLabel(asm,labelIndex,labelName) # Save all jump's destinations
+
+    #print(labelName,labelIndex)
+
+    # Read every line individually and convert it into a hex machine code value that represents that same instruction
+    for line in asm:
+        line = line.replace("\n","") # Removes extra chars
+        line = line.replace("$zero","$0")
+        line = line.replace("$","")
+        line = line.replace(" ","")
+        if(line[0:5] == "addiu"): #ADDIU
+            line = line.replace("addiu","")
+            line = line.split(",")
+
+            try:
+                imm = format(twosComp(-1*int(line[2])),'016b') if(int(line[2])<0) else format(int(line[2]),'016b')
+            except:
+                imm = format(int(line[2],16),'016b')
+            rs = format(int(line[1]),'05b')
+            rt = format(int(line[0]),'05b')
+            f.write(convertToHex(str('001001') + str(rs) + str(rt) + str(imm)) + '\n')
+
+        elif(line[0:4] == "addi"): # ADDI
+            line = line.replace("addi","")
+            line = line.split(",")
+            try:
+                imm = format(int(line[2]),'016b') if (int(line[2]) >= 0) else format(65536 + int(line[2]),'016b')
+            except:
+                imm = format(int(line[2],16),'016b')
+            rs = format(int(line[1]),'05b')
+            rt = format(int(line[0]),'05b')
+            f.write(convertToHex(str('001000') + str(rs) + str(rt) + str(imm)) + '\n')
+
+        elif(line[0:4] == "addu"): #ADDU
+            line = line.replace("addu","")
+            line = line.split(",")
+            rd = format(int(line[0]),'05b')
+            rs = format(int(line[1]),'05b')
+            rt = format(int(line[2]),'05b')
+            f.write(convertToHex(str('000000') + str(rs) + str(rt) + str(rd) + str('00000100001')) + '\n')
+
+        elif(line[0:3] == "add"): # ADD
+            line = line.replace("add","")
+            line = line.split(",")
+            rd = format(int(line[0]),'05b')
+            rs = format(int(line[1]),'05b')
+            rt = format(int(line[2]),'05b')
+            f.write(convertToHex(str('000000') + str(rs) + str(rt) + str(rd) + str('00000100000')) + '\n')
+
+        elif(line[0:1] == "j"): # JUMP
+            line = line.replace("j","",1) #Fixed bug where it would remove j from label names
+            line = line.split(",")
+
+            # Since jump instruction has 2 options:
+            # 1) jump to a label
+            # 2) jump to a target (integer)
+            # We need to save the label destination and its target location
+
+            if(line[0].isdigit()): # First,test to see if it's a label or a integer
+                f.write(convertToHex(str('000010') + str(format(int(line[0]),'026b'))) + '\n')
+
+            else: # Jumping to label
+                for i in range(len(labelName)):
+                    if(labelName[i] == line[0]):
+                        f.write(convertToHex(str('000010') + str(format(int(labelIndex[i]),'026b'))) + '\n')
+
+        elif (line[0:8] == "multuxor"):
+            line = line.replace("multuxor", "")
+            line = line.split(",")
+            rd = format(int(line[0]), '05b')
+            rs = format(int(line[1]), '05b')
+            rt = format(int(line[2]), '05b')
+            f.write(convertToHex(str('000000') + str(rs) + str(rt) + str(rd) + str('00000111111')) + '\n')
+
+        elif(line[0:5] == "multu"): #MULTU
+            line = line.replace("multu","")
+            line = line.split(",")
+            rs = format(int(line[0]),'05b')
+            rt = format(int(line[1]),'05b')
+            f.write(convertToHex(str('000000') + str(rs) + str(rt) + str('0000000000011001')) + '\n')
+
+
+        elif(line[0:4] == "mult"): #MULT
+            line = line.replace("mult","")
+            line = line.split(",")
+            rs = format(int(line[0]),'05b')
+            rt = format(int(line[1]),'05b')
+            f.write(convertToHex(str('000000') + str(rs) + str(rt) + str('0000000000011000')) + '\n')
+
+        elif(line[0:3] == "srl"): #SRL
+            line = line.replace("srl","")
+            line = line.split(",")
+            shamt = format(int(line[2]),'05b') if (int(line[2]) >= 0) else format(33 + int(line[2]),'05b')
+            rt = format(int(line[1]),'05b')
+            rd = format(int(line[0]),'05b')
+            f.write(convertToHex(str('00000000000') + str(rt) + str(rd) + str(shamt) + str('000010')) + '\n')
+
+        elif(line[0:2] == "lb"): #LB
+            line = line.replace("lb","")
+            line = line.replace("(",",")
+            line = line.replace(")","")
+            line = line.split(",")
+            try:
+                imm = format(int(line[1]),'016b') if (int(line[1]) >= 0) else format(65536 + int(line[1]),'016b')
+            except:
+                imm = format(int(line[1],16),'016b') if (int(line[1],16) >= 0) else format(65536 + int(line[1],16),'016b')
+            rs = format(int(line[2]),'05b')
+            rt = format(int(line[0]),'05b')
+            f.write(convertToHex(str('100000') + str(rs) + str(rt) + str(imm)) + '\n')
+
+        elif(line[0:2] == "sb"): #SB
+            line = line.replace("sb","")
+            line = line.replace("(",",")
+            line = line.replace(")","")
+            line = line.split(",")
+            try:
+                imm = format(int(line[1]),'016b') if (int(line[1]) >= 0) else format(65536 + int(line[1]),'016b')
+            except:
+                imm = format(int(line[1],16),'016b')
+            rs = format(int(line[2]),'05b')
+            rt = format(int(line[0]),'05b')
+            f.write(convertToHex(str('101000') + str(rs) + str(rt) + str(imm)) + '\n')
+
+        elif(line[0:2] == "lw"): #LW
+            line = line.replace("lw","")
+            line = line.replace("(",",")
+            line = line.replace(")","")
+            line = line.split(",")
+            try:
+                imm = format(int(line[1]),'016b') if (int(line[1]) >= 0) else format(65536 + int(line[1]),'016b')
+            except:
+                imm = format(int(line[1],16),'016b')
+            rs = format(int(line[2]),'05b')
+            rt = format(int(line[0]),'05b')
+            f.write(convertToHex(str('100011') + str(rs) + str(rt) + str(imm)) + '\n')
+
+        elif(line[0:2] == "sw"): #SW
+            line = line.replace("sw","")
+            line = line.replace("(",",")
+            line = line.replace(")","")
+            line = line.split(",")
+            try:
+                imm = format(int(line[1]),'016b') if (int(line[1]) >= 0) else format(65536 + int(line[1]),'016b')
+            except:
+                imm = format(int(line[1],16),'016b')
+            rs = format(int(line[2]),'05b')
+            rt = format(int(line[0]),'05b')
+            f.write(convertToHex(str('101011') + str(rs) + str(rt) + str(imm)) + '\n')
+
+        elif(line[0:3] == "beq"): #BEQ
+            line = line.replace("beq","")
+            line = line.split(",")
+
+         # Branching to label
+            for i in range(len(labelName)):
+                if(labelName[i] == line[2]):
+                    temp = labelIndex[i] - currLine  #Since branching uses local values so we have to find the
+                    if(temp < 0):                    #difference between the current line and label location
+                        temp *= -1
+                        temp = twosComp(temp)
+                        imm = format(temp,'016b')
+                    else:
+                        imm = format(temp,'016b')
+
+            rs = format(int(line[0]),'05b')
+            rt = format(int(line[1]),'05b')
+            f.write(convertToHex(str('000100') + str(rs) + str(rt) + str(imm)) + '\n')
+
+        elif(line[0:3] == "bne"): #BNE
+            line = line.replace("bne", "")
+            line = line.replace("\t","")
+            line = line.split(",")
+
+            # Branching to label
+            for i in range(len(labelName)):
+                if(labelName[i] == line[2]):
+                    temp = labelIndex[i] - currLine
+                    if(temp < 0):
+                        temp *= -1
+                        temp = twosComp(temp)
+                        imm = format(temp,'016b')
+                    else:
+                        imm = format(temp,'016b')
+
+            rs = format(int(line[0]),'05b')
+            rt = format(int(line[1]),'05b')
+            f.write(convertToHex(str('000101') + str(rs) + str(rt) + str(imm)) + '\n')
+
+        elif(line[0:4] == "sltu"): #SLTU
+            line = line.replace("sltu","")
+            line = line.split(",")
+            rt = format(int(line[2]),'05b')
+            rs = format(int(line[1]),'05b')
+            rd = format(int(line[0]),'05b')
+            f.write(convertToHex(str('000000') + str(rs) + str(rt) + str(rd) + str('00000101011')) + '\n')
+
+        elif(line[0:3] == "slt"): #SLT
+            line = line.replace("slt","")
+            line = line.split(",")
+            rt = format(int(line[2]),'05b')
+            rs = format(int(line[1]),'05b')
+            rd = format(int(line[0]),'05b')
+            f.write(convertToHex(str('000000') + str(rs) + str(rt) + str(rd) + str('00000101010')) + '\n')
+
+        elif(line[0:4] == "mflo"): #MFLO
+            line = line.replace("mflo","")
+            line = line.split(",")
+            rd = format(int(line[0]),'05b')
+            f.write(convertToHex(str('0000000000000000') + str(rd) + str('00000010010')) + '\n')
+
+        elif(line[0:4] == "mfhi"): #MFHI
+            line = line.replace("mfhi","")
+            line = line.split(",")
+            rd = format(int(line[0]),'05b')
+            f.write(convertToHex(str('0000000000000000') + str(rd) + str('00000010000')) + '\n')
+
+        elif(line[0:3] == "lui"): #LUI
+            line = line.replace("lui","")
+            line = line.split(",")
+            try:
+                imm = format(int(line[1]),'016b') if (int(line[1]) >= 0) else format(65536 + int(line[1]),'016b')
+            except:
+                imm = format(int(line[1],16),'016b')
+            rt = format(int(line[0]),'05b')
+            f.write(convertToHex(str('001111') + str('00000') + str(rt) + str(imm)) + '\n')
+
+        elif(line[0:3] == "ori"): #ORI
+            line = line.replace("ori","")
+            line = line.split(",")
+            try:
+                imm = format(int(line[2]),'016b') if (int(line[2]) >= 0) else format(65536 + int(line[2]),'016b')
+            except:
+                imm = format(int(line[2],16),'016b')
+            rt = format(int(line[0]),'05b')
+            rs = format(int(line[1]),'05b')
+            f.write(convertToHex(str('001101') + str(rs) + str(rt) + str(imm)) + '\n')
+
+        elif(line[0:3] == "xor"): #XOR
+            line = line.replace("xor","")
+            line = line.split(",")
+            rd = format(int(line[0]),'05b')
+            rs = format(int(line[1]),'05b')
+            rt = format(int(line[2]),'05b')
+            f.write(convertToHex(str('000000') + str(rs) + str(rt) + str(rd) + str('00000100110')) + '\n')
+
+        elif(line[0:4] == "andi"): #ANDI
+            line = line.replace("andi","")
+            line = line.split(",")
+            try:
+                imm = format(int(line[2]),'016b') if (int(line[2]) >= 0) else format(65536 + int(line[2]),'016b')
+            except:
+                imm = format(int(line[2],16),'016b')
+            rt = format(int(line[0]),'05b')
+            rs = format(int(line[1]),'05b')
+            f.write(convertToHex(str('001100') + str(rs) + str(rt) + str(imm)) + '\n')
+
+        elif(line[0:3] == "and"): #AND
+            line = line.replace("and","")
+            line = line.split(",")
+            rd = format(int(line[0]),'05b')
+            rs = format(int(line[1]),'05b')
+            rt = format(int(line[2]),'05b')
+            f.write(convertToHex(str('000000') + str(rs) + str(rt) + str(rd) + str('00000') + str('100100')) + '\n')
+
+        else:
+            print(line + " is undefined")
+
+
+        currLine += 1
+
+
+    f.close()
+
+# Print formatted output into a txt file
+def printOutput(regs,lineCount, instrCount):
+    o = open("output.txt","w")
+    string = ''
+    for i in range(4):
+        for k in range(4):
+            if(regs.read(str(k+(i*4)+8))):
+                regs.write(str(k+(i*4)+8), (pow(2,32) + regs.read(str(k+(i*4)+8)))&pow(2,32)-1)
+            else:
+                regs.write(str(k+(i*4)+8),regs.read(str(k+(i*4)+8))&pow(2,32)-1)
+            string += str(('$' + str(k+(i*4)+8) + ':').rjust(4) + ' ' + convertToHex(format(regs.read(str(k+(i*4)+8)),'032b')) + '\t')
+        o.write(string + '\n')
+        string = ''
+
+    string += str(' $0: ' + convertToHex(format(regs.read("0"),'032b')) + '\t')
+    string += str(" pc: " + convertToHex(format(regs.read("pc"),'032b')) + '\t')
+    string += str(" hi: " + convertToHex(format(regs.read("hi"),'032b')) + '\t')
+    string += str(" lo: " + convertToHex(format(regs.read("lo"),'032b')) + '\t')
+    o.write(string + '\n\n\n')
+
+    o.write(" Dynamic Instruction Count: " + str(instrCount) + "\n\n")
+    o.write("Address:\tvalue(+0)\tvalue(+4)\tvalue(+8)\tvalue(+c)\n")
+
+
+    string = ''
+    for i in range(lineCount):
+        string += str(convertToHex(format(int("0x2000",16)+(i*16),'032b')) + ':')
+        for k in range(4):
+            string += '\t'
+            for l in range(4):
+                string += format(stack.read((k*4)+(i*16)+(3-l)),'02x')
+        o.write(string + '\n')
+        string = ''
+
+
+
+# This function interprets our machine code and runs the instructions line by line
+def run():
+    h = open("mc.txt","r")
+    mc = h.readlines()
+    h.close()
+    regs = Registers()
+    instruction_calls = 0
+
+    mcLength = len(mc)*4  # This really is the value of the last instruction in memory.
+    while(regs.read("pc") != mcLength):
+        line = mc[int(regs.read("pc")/4)]
+        line = line.replace("\n","")
+        instr = Instruction(line)
+        if(instr.type == "i"):
+            function = i_type_func_dict[instr.func] # if it is an i type instruction look at i type dictionary
+        else:
+            function = r_type_func_dict[instr.func] # if it is an r type instruction look at r type dictionary
+
+        stop = function(instr,regs) # call the function
+        instruction_calls += 1
+
+        if(stop):
+            time.sleep(5) # If our instruction returns "1" its in debug mode and will wait 5 seconds after executing
+
+        if(function == j):
+            continue         # if we use a jump instruction we should not add to pc.
+        else:
+            regs.write("pc",regs.read("pc")+4) # pc += 4
+
+
+
+    printOutput(regs,20, instruction_calls)
+
+
+def main():
+    assemble()
+    run()
+
+if __name__ == "__main__":
+    main()
