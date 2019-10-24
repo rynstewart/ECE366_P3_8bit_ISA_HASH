@@ -31,7 +31,7 @@ example: `0000 dd ss`
 |                 |jmp     |
 |                 |halt    |
 
-**Meeting Logs
+## Meeting Logs
 
 |Date    |attended     |Discussed    |
 |--------|-------------|-------------|
