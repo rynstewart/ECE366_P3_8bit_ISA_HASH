@@ -73,6 +73,53 @@ def main():
         if(line[0:4] == "halt"):
             PC += 4
             break
+
+       elif(line[0:4] == "init"):
+            line= line.replace("init","")
+            line= line.split(",")
+            PC +=4
+            regval[int(line[0])]= int(line[1],16)
+            f.write('Operation: $' + line[0] + ' = ' + line[1] + '; ' + '\n')
+            f.write('PC is now at ' + str(PC) + '\n')
+            f.write('Registers that have changed: ' + '$' + line[0] + ' = ' + str(regval[int(line[0])]) + '\n')
+
+        elif(line[0:2] == "ld"):
+            line= line.replace("ld","")
+            line = line.replace("(","")
+            line = line.replace(")","")
+            line= line.split(",")
+            PC +=4
+
+            regval[int(line[0])]= MEM[regval[int(line[1])]]
+            f.write('Operation: $' + line[0] + ' = ' + 'MEM[$' + line[1] + ']; ' + '\n')
+            f.write('PC is now at ' + str(PC) + '\n')
+            f.write('Registers that have changed: ' + '$' + line[0] + ' = ' + str(regval[int(line[0])]) + '\n')
+
+        elif(line[0:2] == "st"):
+            line= line.replace("st","")
+            line = line.replace("(","")
+            line = line.replace(")","")
+            line= line.split(",")
+            print(line)
+            PC +=4
+            X= regval[int(line[0])]
+            MEM[regval[int(line[1])]] = X
+            f.write('Operation: MEM[$' + line[1] + '] = ' + line[0] + '; ' + '\n')
+            f.write('PC is now at ' + str(PC) + '\n')
+            #ask about regs that changed
+
+        elif(line[0:3] == "add"):
+            line= line.replace("add","")
+            line= line.split(",")
+            PC +=4
+            regval[int(line[0])]= regval[int(line[0])] + regval[int(line[1])]
+            f.write('Operation: $' + line[0] + ' = ' + '$' + line[0] + '+ $' + line[1] + '; ' + '\n')
+            f.write('PC is now at ' + str(PC) + '\n')
+            f.write('Registers that have changed: ' + '$' + line[0] + ' = ' + str(regval[int(line[0])]) + '\n')
+
+
+
+            
         #implement actual sim here
 
 
