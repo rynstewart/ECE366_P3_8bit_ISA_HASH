@@ -117,12 +117,31 @@ def main():
             f.write('PC is now at ' + str(PC) + '\n')
             f.write('Registers that have changed: ' + '$' + line[0] + ' = ' + str(regval[int(line[0])]) + '\n')
 
+        elif(line[0:5] == "bezR0"): # Beq
+            line = line.replace("bezR0","")
+            line = line.split(",")
+            try:
+                imm = int(line[0],16)
+            except:
+                f.write("ERROR: Invalid Instruction")
+                break
+            if(regval[0]==0):
+                PC = PC + (4*imm)
+                lineCount = lineCount + imm
+                f.write('PC is now at ' + str(line[0]) + '\n')
 
 
-            
-        #implement actual sim here
-
-
+        elif(line[0:3] == "jmp"): # jmp
+            line = line.replace("jmp","")
+            line = line.split(",")
+            try:
+                imm = int(line[0],16)
+            except:
+                f.write("ERROR: Invalid Instruction")
+                break
+            PC = PC + (4*imm)
+            lineCount = lineCount + imm
+            f.write('PC is now at ' + str(line[0]) + '\n')
 
         lineCount += 1
 
