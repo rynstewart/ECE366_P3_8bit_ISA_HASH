@@ -34,7 +34,9 @@ def main():
     HI = 6
     good_in = False
     while(good_in == False):
-        file_Name = input("Please type file name, enter for default, or q to quit:")
+      
+        file_Name = input("Please type file name, enter for default, or q to quit:\n")
+
         if(file_Name == "q"):
            print("Bye!")
            return
@@ -61,6 +63,11 @@ def main():
     while(lineCount < len(asm)):
 
         line = asm[lineCount]
+        
+        if(line[0]=='#'):
+            lineCount += 1
+            continue
+
         f.write('------------------------------ \n')
         if(not(':' in line)):
             f.write('MIPS Instruction: ' + line + '\n')
@@ -68,7 +75,7 @@ def main():
         line = line.replace("$","")
         line = line.replace(" ","")
         line = line.replace("zero","0") # assembly can also use both $zero and $0
-
+        
         #addi
         if(line[0:4] == "addi"):
             line = line.replace("addi", "").split(",")
@@ -97,9 +104,87 @@ def main():
         if(line[0:4] == "halt"):
             PC += 4
             break
-        #implement actual sim here
+
+        if(line[0:4] == "halt"):
+            PC += 4
+            f.write('PC is now at ' + str(PC) + '\n')
+            break
+
+        elif(line[0:4] == "init"):
+            line= line.replace("init","")
+            line= line.split(",")
+            PC +=4
+            regval[int(line[0])]= int(line[1],16)
+            f.write('Operation: $' + line[0] + ' = ' + line[1] + '; ' + '\n')
+            f.write('PC is now at ' + str(PC) + '\n')
+            f.write('Registers that have changed: ' + '$' + line[0] + ' = ' + str(regval[int(line[0])]) + '\n')
+
+        elif(line[0:2] == "ld"):
+            line= line.replace("ld","")
+            line = line.replace("(","")
+            line = line.replace(")","")
+            line= line.split(",")
+            PC +=4
+
+            regval[int(line[0])]= MEM[regval[int(line[1])]]
+            f.write('Operation: $' + line[0] + ' = ' + 'MEM[$' + line[1] + ']; ' + '\n')
+            f.write('PC is now at ' + str(PC) + '\n')
+            f.write('Registers that have changed: ' + '$' + line[0] + ' = ' + str(regval[int(line[0])]) + '\n')
+
+        elif(line[0:2] == "st"):
+            line= line.replace("st","")
+            line = line.replace("(","")
+            line = line.replace(")","")
+            line= line.split(",")
+            print(line)
+            PC +=4
+            X= regval[int(line[0])]
+            MEM[regval[int(line[1])]] = X
+            f.write('Operation: MEM[$' + line[1] + '] = ' + line[0] + '; ' + '\n')
+            f.write('PC is now at ' + str(PC) + '\n')
+            #ask about regs that changed
+
+        elif(line[0:3] == "add"):
+            #breakpoint()
+            line= line.replace("add","")
+            line= line.split(",")
+            PC +=4
+            regval[int(line[0])]= regval[int(line[0])] + regval[int(line[1])]
+            f.write('Operation: $' + line[0] + ' = ' + '$' + line[0] + '+ $' + line[1] + '; ' + '\n')
+            f.write('PC is now at ' + str(PC) + '\n')
+            f.write('Registers that have changed: ' + '$' + line[0] + ' = ' + str(regval[int(line[0])]) + '\n')
+
+        elif(line[0:5] == "bezR0"): # Beq
+            line = line.replace("bezR0","")
+            line = line.split(",")
+            try:
+                imm = int(line[0],16)
+            except:
+                f.write("ERROR: Invalid Instruction")
+                break
+            if(regval[0]==0):
+                PC = PC + (4*imm)
+                lineCount = lineCount + imm
+                f.write('PC is now at ' + str(PC) + '\n')
+                f.write('No Registers have changed. \n')
+                continue
+            f.write('No Registers have changed. \n')
+            PC += 4
 
 
+        elif(line[0:3] == "jmp"): # jmp
+            line = line.replace("jmp","")
+            line = line.split(",")
+            try:
+                imm = int(line[0],16)
+            except:
+                f.write("ERROR: Invalid Instruction")
+                break
+            PC = PC + (4*imm)
+            lineCount = lineCount + imm
+            f.write('PC is now at ' + str(PC) + '\n')
+            f.write('No Registers have changed. \n')
+            continue
 
         lineCount += 1
 
