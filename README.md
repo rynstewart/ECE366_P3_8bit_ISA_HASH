@@ -10,10 +10,10 @@ example: `0000 dd ss`
 
 |Instruction Name |OP code |
 |-----------------|--------|
-|mult             |        |
-|xor              |        |
-|l2b              |        |
-|s2b              |        |
+|mult             |1101    |
+|xor              |1001    |
+|l2b              |0100    |
+|s2b              |0101    |
 
 ## Work Split
 
