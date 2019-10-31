@@ -34,7 +34,9 @@ def main():
     HI = 6
     good_in = False
     while(good_in == False):
+      
         file_Name = input("Please type file name, enter for default, or q to quit:\n")
+
         if(file_Name == "q"):
            print("Bye!")
            return
@@ -73,6 +75,35 @@ def main():
         line = line.replace("$","")
         line = line.replace(" ","")
         line = line.replace("zero","0") # assembly can also use both $zero and $0
+        
+        #addi
+        if(line[0:4] == "addi"):
+            line = line.replace("addi", "").split(",")
+            PC += 4
+            regval[int(line[0])] = regval[int(line[1])] + int(line[2])
+
+        #sub
+        if(line[0:4] == "sub"):
+            line = line.replace("sub", "").split(",")
+            PC += 4
+            regval[int(line[0])] = regval[int(line[1])] - regval[int(line[2])]
+        #xor
+        if (line[0:3] == "xor"):
+            line = line.replace("xor", "").split(",")
+            PC += 4
+            regval[int(line[0])] = regval[int(line[1])] ^ regval[int(line[2])]
+        #slt
+        if (line[0:4] == "slt"):
+            line = line.replace("slt", "").split(",")
+            PC += 4
+            regval[int(line[0])] = 0
+            if regval[int(line[1])] < regval[int(line[2])]:
+                regval[int(line[0])] = 1
+
+
+        if(line[0:4] == "halt"):
+            PC += 4
+            break
 
         if(line[0:4] == "halt"):
             PC += 4
@@ -154,7 +185,6 @@ def main():
             f.write('PC is now at ' + str(PC) + '\n')
             f.write('No Registers have changed. \n')
             continue
-
 
         lineCount += 1
 
