@@ -7,6 +7,7 @@ Instruction format: 4 bits OP code, 2 bits rd, 2 bits rs
 example: `0000 dd ss`
 
 ## Hash Instruction Ideas
+Note: branch type needs decision and may need increment
 
 |Instruction Name |OP code |
 |-----------------|--------|
@@ -14,6 +15,11 @@ example: `0000 dd ss`
 |xor              |1001    |
 |l2b              |0100    |
 |s2b              |0101    |
+|andi             |        |
+|srl              |        |
+|addiu            |        |
+|branch(+)        |        |
+
 
 ## Work Split
 
@@ -36,3 +42,4 @@ example: `0000 dd ss`
 |Date    |attended     |Discussed    |
 |--------|-------------|-------------|
 |10/23/19|Christina, Marah, and Ryn|Starting with example 8 bit ISA, and split up work between group members.|
+|11/01/19|Christina and Ryn|Discussed and considered instructions ideas.|
