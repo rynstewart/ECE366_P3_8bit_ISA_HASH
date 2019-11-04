@@ -33,6 +33,17 @@ def main():
     LO = 5
     HI = 6
     good_in = False
+
+    addiu = "1000"
+    xor = "1001"
+    initli = "00"
+    initui = "01" #has to be checked before ld and st
+    ld = "0100"
+    st = "0101"
+    add = "0110"
+    bezR0 = "1011"
+    jmp = "1100"
+
     while(good_in == False):
       
         file_Name = input("Please type file name, enter for default, or q to quit:\n")
@@ -75,52 +86,29 @@ def main():
         line = line.replace("$","")
         line = line.replace(" ","")
         line = line.replace("zero","0") # assembly can also use both $zero and $0
+        #breakpoint()
+        if(line[0:2] == initli):
+            PC +=4
+            regval[int(line[1:2],2)]= int(line[3:6],2)
+            f.write('Operation: $' + str(int(line[1:2],2)) + ' = ' + str(int(line[3:6],2)) + '; ' + '\n')
+            f.write('PC is now at ' + str(PC) + '\n')
+            f.write('Registers that have changed: ' + '$' + line[0] + ' = ' + str(regval[int(line[0])]) + '\n')
         
-        #addi
-        if(line[0:4] == "addi"):
+        #addiu
+        elif(line[0:4] == addiu):
             line = line.replace("addi", "").split(",")
             PC += 4
             regval[int(line[0])] = regval[int(line[1])] + int(line[2])
+            f.write('Operation: MEM[$' + line[1] + '] = ' + line[0] + '; ' + '\n')
 
-        #sub
-        if(line[0:4] == "sub"):
-            line = line.replace("sub", "").split(",")
-            PC += 4
-            regval[int(line[0])] = regval[int(line[1])] - regval[int(line[2])]
         #xor
-        if (line[0:3] == "xor"):
+        elif (line[0:4] == xor):
             line = line.replace("xor", "").split(",")
             PC += 4
             regval[int(line[0])] = regval[int(line[1])] ^ regval[int(line[2])]
-        #slt
-        if (line[0:4] == "slt"):
-            line = line.replace("slt", "").split(",")
-            PC += 4
-            regval[int(line[0])] = 0
-            if regval[int(line[1])] < regval[int(line[2])]:
-                regval[int(line[0])] = 1
 
-
-        if(line[0:4] == "halt"):
-            PC += 4
-            break
-
-        if(line[0:4] == "halt"):
-            PC += 4
-            f.write('PC is now at ' + str(PC) + '\n')
-            break
-
-        elif(line[0:4] == "init"):
-            line= line.replace("init","")
-            line= line.split(",")
-            PC +=4
-            regval[int(line[0])]= int(line[1],16)
-            f.write('Operation: $' + line[0] + ' = ' + line[1] + '; ' + '\n')
-            f.write('PC is now at ' + str(PC) + '\n')
-            f.write('Registers that have changed: ' + '$' + line[0] + ' = ' + str(regval[int(line[0])]) + '\n')
-
-        elif(line[0:2] == "ld"):
-            line= line.replace("ld","")
+        elif(line[0:2] == ld):
+            line= line.replace(ld,"")
             line = line.replace("(","")
             line = line.replace(")","")
             line= line.split(",")
@@ -143,16 +131,6 @@ def main():
             f.write('Operation: MEM[$' + line[1] + '] = ' + line[0] + '; ' + '\n')
             f.write('PC is now at ' + str(PC) + '\n')
             #ask about regs that changed
-
-        elif(line[0:3] == "add"):
-            #breakpoint()
-            line= line.replace("add","")
-            line= line.split(",")
-            PC +=4
-            regval[int(line[0])]= regval[int(line[0])] + regval[int(line[1])]
-            f.write('Operation: $' + line[0] + ' = ' + '$' + line[0] + '+ $' + line[1] + '; ' + '\n')
-            f.write('PC is now at ' + str(PC) + '\n')
-            f.write('Registers that have changed: ' + '$' + line[0] + ' = ' + str(regval[int(line[0])]) + '\n')
 
         elif(line[0:5] == "bezR0"): # Beq
             line = line.replace("bezR0","")
@@ -191,9 +169,9 @@ def main():
     print("REGISTERS:")
     print("-----------")
     for x in range(len(regval)):
-        if(x == 5):
+        if(x == 4):
             print("lo: ", hex(regval[x]))
-        elif(x == 6):
+        elif(x == 5):
             print("hi: ", hex(regval[x]))
         else:
             print("$", x,": ", hex(regval[x]))
