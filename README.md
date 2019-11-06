@@ -20,11 +20,11 @@ Note: branch type needs decision and may need increment
 |sinc2b           |0101    |Stores two bits into mem and then increments address by two|
 |s8b              |0101    |
 |l8b              |0100    |
-|andi             |        |
-|srl              |        |
+|andi             |0111    |
+|srl              |0011    |
 |addiu            |1000    |
 |branch(+)        |1100    |special branch that increments a specific branch register|
-|jmp              |        |
+|jmp              |0010    |
 
 
 ## Work Split
