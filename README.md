@@ -13,17 +13,18 @@ Note: branch type needs decision and may need increment
 
 |Instruction Name |OP code |Description            |
 |-----------------|--------|-----------------------|
-|initui           |0001    |Intialize upper 4 bits of a register|
-|initl            |0000    |Intialize lower 4 bits of a register|
+|initui           |01      |Intialize upper 4 bits of a register|
+|initl            |00      |Intialize lower 4 bits of a register|
 |Fold             |1101    |Unsigned mult of an A and B into a C, then xor the hi and lo|
 |xor              |1001    |
 |sinc2b           |0101    |Stores two bits into mem and then increments address by two|
-|s8b              |0110    |
+|s8b              |0101    |
 |l8b              |0100    |
 |andi             |        |
 |srl              |        |
-|addiu            |        |
-|branch(+)        |        |special branch that increments a specific branch register|
+|addiu            |1000    |
+|branch(+)        |1100    |special branch that increments a specific branch register|
+|jmp              |        |
 
 
 ## Work Split
