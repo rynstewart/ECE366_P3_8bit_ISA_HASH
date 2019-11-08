@@ -114,7 +114,7 @@ def main():
             PC += 4
             X = regval[int(line[4:6])]
             MEM[mem_addr] = X
-            mem_addr += 2
+            mem_addr += 1
             f.write('Operation: MEM[$' + line[7:8] + '] = ' + line[5:6] + '; ' + '\n')
             f.write('PC is now at ' + str(PC) + '\n')
 
@@ -243,6 +243,7 @@ def main():
 
         lineCount += 1
 
+
     print("REGISTERS:")
     print("-----------")
 
@@ -261,13 +262,27 @@ def main():
     print("\n")
     print("Used Memory values:\n")
     print("            ", end="")
-    for x in range(0, 8, 1):
-        print("0x" + format((x * 4), "08x"), end=" ")
+    for x in range(0, 4, 1):
+        print("0b" + format((x * 2), "02b"), end=" ")
     print("\n")
     print("--------------------------------------------------------------------------------------------------", end="")
     count = 0
     print("\n")
-    for x in range(0x0000, 0x0100, 4):
+    for x in range(0x0000, 0x000C, 1):
+        #breakpoint()
+        x = x*4
+        print("0b", end="")
+        for y in range(3, -1, -1):
+           # z = (y + x)*4
+            print(format(MEM[y + x], "02b"), end="")
+        print(" ", end="")
+        count += 1
+        if (count == 4):
+            count = 0
+            print("\n")
+        x = x/4
+
+        '''
         if ((x - 0x3) % 0x20 == 0):
             print("0x" + format(x - 0x3, "08x") + '|', end=" ")
         print("0x", end="")
@@ -278,6 +293,7 @@ def main():
         if (count == 8):
             count = 0
             print("\n")
+        '''
 
     f.close()
 
