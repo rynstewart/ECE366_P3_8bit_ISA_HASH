@@ -41,25 +41,27 @@ def main():
     labelAddr = []
     regName = []
     PC = 0
+    DIC = 0
     regNameInit(regName)
-    regval = [0] * 6  # 0-4, lo and hi
+    regval = [0] * 6  # 0-3, A, lo and hi
+    A = 4
+    regval[A] = 1
     LO = 5
     HI = 6
     good_in = False
 
 
     #TODO: update op code to same bits
-    initli = "00"
-    initui = "01"  # has to be checked after ld and st(last ones)
-    srl = "0010"
+    initlo = "00"
+    inithi = "10"  # has to be checked after ld and st(last ones)
+    xor = "0010"
     sinc2b = "0011"
     l8 = "0100"
     s8 = "0101"
-    add = "0110"
+    addu = "0110"
     addiu = "0111"
     and1 = "1000"
-    xor = "1001"
-    andi = "1010"
+    srl = "1010"
     bezR0 = "1011"
     jmp = "1100"
     Fold = "1101"
@@ -91,17 +93,17 @@ def main():
 
         line = t[lineCount]
 
-
         f.write('------------------------------ \n')
         if (not (':' in line)):
             f.write('MIPS Instruction: ' + line + '\n')
 
-
         if(line[0:4] == srl):
+            # XXXXSSTT
+            #always to $3
             PC += 4
-            S = int(line[7:8])
-            regval[int(line[5:6])] = regval[int(line[5:6])] >> S
+            RT = regval[int(line[6:], 2)]
 
+            regval[3] = regval[int(line[4:6])] >> RT
 
         elif (line[0:4] == sinc2b):
             PC += 4
@@ -110,8 +112,7 @@ def main():
             f.write('Operation: MEM[$' + line[7:8] + '] = ' + line[5:6] + '; ' + '\n')
             f.write('PC is now at ' + str(PC) + '\n')
 
-
-        elif(line[0:4] == add):
+        elif(line[0:4] == addu):
             PC += 4
             regval[int(line[5:6])] += regval[int(line[7:8])]
 
@@ -122,7 +123,7 @@ def main():
             f.write('Operation: MEM[$' + line[1] + '] = ' + line[0] + '; ' + '\n')
 
         #andi
-        elif(line[0:4] == andi):
+        elif(line[0:4] == and1):
             PC += 4
             regval[int(line[5:6])] = regval[int(line[5:6])] & int(line[7:8])
             f.write('Operation: MEM[$' + line[5:6] + '] = ' + line[7:8] + '; ' + '\n')
@@ -130,47 +131,53 @@ def main():
         # xor
         elif (line[0:4] == xor):
             PC += 4
-            regval[int(line[5:6])] = regval[int(line[5:6])] ^ regval[int(line[7:8])]
+            regval[0] = regval[int(line[4:6])] ^ regval[int(line[6:8])]
 
         elif (line[0:4] == l8):
             PC += 4
-
             regval[int(line[4:6], 2)] = MEM[regval[int(line[6:8], 2)]]
             f.write('Operation: $' + str(int(line[5:6], 2)) + ' = ' + 'MEM[$' + str(int(line[7:8], 2)) + ']; ' + '\n')
             f.write('PC is now at ' + str(PC) + '\n')
             f.write('Registers that have changed: ' + '$' + str(int(line[5:6], 2)) + ' = ' + str(regval[int(line[5:6])]) + '\n')
 
         elif (line[0:4] == s8):
-            print(line)
             PC += 4
             X = regval[int(line[4:6], 2)]
-            MEM[regval[int(line[6:], 2)]] = X
+            MEM[regval[int(line[6:8], 2)]] = X
             f.write('Operation: MEM[' + str(MEM[regval[int(line[6:], 2)]]) + '] = ' + str(X) + '; ' + '\n')
             f.write('PC is now at ' + str(PC) + '\n')
             # ask about regs that changed
 
+        elif (line[0:4] == Fold):
+            #Always comes out from C = $0
+            PC += 4
+            result = regval[1] * regval[A]
+            tempL = result & 0b11111111
+            tempH = result >> 8
+            regval[0] = tempH ^ tempL
+            f.write('Operation: $' + str(0) + ' = ' + str(imm) + '; ' + '\n')
+            f.write('PC is now at ' + str(PC) + '\n')
+            f.write('Registers that have changed: ' + '$' + str(0) + ' = ' + str(imm) + '\n')
+
         #initli: lower 4
-        elif (line[0:2] == initli):
+        elif (line[0:2] == initlo):
             PC += 4
             reg = int(line[2:4], 2)
             imm = int(line[4:], 2)
             regval[reg] += imm
             f.write('Operation: $' + str(reg) + ' = ' + str(imm) + '; ' + '\n')
             f.write('PC is now at ' + str(PC) + '\n')
-            f.write('Registers that have changed: ' + '$' + str(regval[reg]) + ' = ' + str(imm) + '\n')
+            f.write('Registers that have changed: ' + '$' + str(reg) + ' = ' + str(imm) + '\n')
 
         #initui: upper 4
-        elif(line[0:2] == "01"):
-            PC +=4
+        elif (line[0:2] == inithi):
+            PC += 4
             reg = int(line[2:4], 2)
             imm = int(line[4:], 2)
-            regval[reg] = imm << 4
+            regval[reg] += imm << 4
             f.write('Operation: $' + str(reg) + ' = ' + str(imm) + '; ' + '\n')
             f.write('PC is now at ' + str(PC) + '\n')
-            f.write('Registers that have changed: ' + '$' + str(regval[reg]) + ' = ' + str(imm) + '\n')
-
-
-
+            f.write('Registers that have changed: ' + '$' + str(reg) + ' = ' + str(imm) + '\n')
 
         elif (line[0:5] == bezR0):  # Beq
             try:
@@ -200,8 +207,8 @@ def main():
             lineCount = lineCount + imm
             f.write('PC is now at ' + str(PC) + '\n')
             f.write('No Registers have changed. \n')
-
             continue
+
 
 
         lineCount += 1
@@ -210,10 +217,12 @@ def main():
     print("-----------")
 
     for x in range(len(regval)):
-        if (x == 4):
-            print("lo: ", hex(regval[x]))
-        elif (x == 5):
-            print("hi: ", hex(regval[x]))
+        if (x == LO):
+            print("LO: ", hex(regval[x]))
+        elif (x == HI):
+            print("HI: ", hex(regval[x]))
+        elif (x == A):
+            print("A: ", hex(regval[x]))
         else:
             print("$", x, ": ", hex(regval[x]))
     print("PC: ", hex(PC))
