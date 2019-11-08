@@ -49,6 +49,7 @@ def main():
     LO = 5
     HI = 6
     good_in = False
+    mem_addr = 0x0000
 
 
     #TODO: update op code to same bits
@@ -65,6 +66,7 @@ def main():
     bezR0 = "1011"
     jmp = "1100"
     Fold = "1101"
+    sub = "1111"
     branch = "1110"
 
     while (good_in == False):
@@ -97,43 +99,67 @@ def main():
         if (not (':' in line)):
             f.write('MIPS Instruction: ' + line + '\n')
 
+
         if(line[0:4] == srl):
+            DIC += 1
             # XXXXSSTT
             #always to $3
             PC += 4
-            RT = regval[int(line[6:], 2)]
+            RT = regval[int(line[6:8], 2)]
 
             regval[3] = regval[int(line[4:6])] >> RT
 
         elif (line[0:4] == sinc2b):
+            DIC += 1
             PC += 4
-            X = regval[int(line[5:6])]
-            MEM[regval[int(line[7:8])]] = X
+            X = regval[int(line[4:6])]
+            MEM[mem_addr] = X
+            mem_addr += 2
             f.write('Operation: MEM[$' + line[7:8] + '] = ' + line[5:6] + '; ' + '\n')
             f.write('PC is now at ' + str(PC) + '\n')
 
         elif(line[0:4] == addu):
+            DIC += 1
             PC += 4
-            regval[int(line[5:6])] += regval[int(line[7:8])]
+            #breakpoint()
+            regval[int(line[4:6],2)] += abs(regval[int(line[6:8],2)])
+            
+            f.write('Operation: $' + str(int(line[5:6])) + ' = ' + str(regval[int(line[5:6])]) + '; ' + '\n')
+            f.write('PC is now at ' + str(PC) + '\n')
+            f.write('DIC is now at '+str(DIC))
+
+        elif(line[0:4] == sub):
+            DIC += 1
+            PC += 4
+            #breakpoint()
+            regval[int(line[4:6],2)] -= regval[int(line[6:8],2)]
+            
+            f.write('Operation: $' + str(int(line[5:6])) + ' = ' + str(regval[int(line[5:6])]) + '; ' + '\n')
+            f.write('PC is now at ' + str(PC) + '\n')
+            f.write('DIC is now at '+str(DIC))
 
         # addiu
         elif (line[0:4] == addiu):
+            DIC += 1
             PC += 4
-            regval[int(line[5:6])] = regval[int(line[5:6])] + int(line[7:8])
+            regval[int(line[5:6])] = regval[int(line[5:6])] + regval[int(line[6:8],2)]
             f.write('Operation: MEM[$' + line[1] + '] = ' + line[0] + '; ' + '\n')
 
         #andi
         elif(line[0:4] == and1):
+            DIC += 1
             PC += 4
-            regval[int(line[5:6])] = regval[int(line[5:6])] & int(line[7:8])
+            regval[int(line[4:6],2)] = regval[int(line[4:6],2)] & regval[int(line[6:8],2)]
             f.write('Operation: MEM[$' + line[5:6] + '] = ' + line[7:8] + '; ' + '\n')
 
         # xor
         elif (line[0:4] == xor):
+            DIC += 1
             PC += 4
-            regval[0] = regval[int(line[4:6])] ^ regval[int(line[6:8])]
+            regval[0] = regval[int(line[4:6],2)] ^ regval[int(line[6:8],2)]
 
         elif (line[0:4] == l8):
+            DIC += 1
             PC += 4
             regval[int(line[4:6], 2)] = MEM[regval[int(line[6:8], 2)]]
             f.write('Operation: $' + str(int(line[5:6], 2)) + ' = ' + 'MEM[$' + str(int(line[7:8], 2)) + ']; ' + '\n')
@@ -141,6 +167,7 @@ def main():
             f.write('Registers that have changed: ' + '$' + str(int(line[5:6], 2)) + ' = ' + str(regval[int(line[5:6])]) + '\n')
 
         elif (line[0:4] == s8):
+            DIC += 1
             PC += 4
             X = regval[int(line[4:6], 2)]
             MEM[regval[int(line[6:8], 2)]] = X
@@ -150,20 +177,22 @@ def main():
 
         elif (line[0:4] == Fold):
             #Always comes out from C = $0
+            DIC += 1
             PC += 4
             result = regval[1] * regval[A]
             tempL = result & 0b11111111
             tempH = result >> 8
             regval[0] = tempH ^ tempL
-            f.write('Operation: $' + str(0) + ' = ' + str(imm) + '; ' + '\n')
+            f.write('Operation: $' + str(0) + ' = ' + str(regval[0]) + '; ' + '\n')
             f.write('PC is now at ' + str(PC) + '\n')
-            f.write('Registers that have changed: ' + '$' + str(0) + ' = ' + str(imm) + '\n')
+            f.write('DIC is now at '+str(DIC))
 
         #initli: lower 4
         elif (line[0:2] == initlo):
+            DIC += 1
             PC += 4
             reg = int(line[2:4], 2)
-            imm = int(line[4:], 2)
+            imm = int(line[4:8], 2)
             regval[reg] += imm
             f.write('Operation: $' + str(reg) + ' = ' + str(imm) + '; ' + '\n')
             f.write('PC is now at ' + str(PC) + '\n')
@@ -171,15 +200,17 @@ def main():
 
         #initui: upper 4
         elif (line[0:2] == inithi):
+            DIC += 1
             PC += 4
             reg = int(line[2:4], 2)
-            imm = int(line[4:], 2)
+            imm = int(line[4:8], 2)
             regval[reg] += imm << 4
             f.write('Operation: $' + str(reg) + ' = ' + str(imm) + '; ' + '\n')
             f.write('PC is now at ' + str(PC) + '\n')
             f.write('Registers that have changed: ' + '$' + str(reg) + ' = ' + str(imm) + '\n')
 
         elif (line[0:5] == bezR0):  # Beq
+            DIC += 1
             try:
                 imm = int(line[5:7], 16)
             except:
@@ -196,6 +227,7 @@ def main():
 
 
         elif (line[0:3] == "jmp"):  # jmp
+            DIC += 1
             line = line.replace("jmp", "")
             line = line.split(",")
             try:
@@ -208,8 +240,6 @@ def main():
             f.write('PC is now at ' + str(PC) + '\n')
             f.write('No Registers have changed. \n')
             continue
-
-
 
         lineCount += 1
 
@@ -226,6 +256,7 @@ def main():
         else:
             print("$", x, ": ", hex(regval[x]))
     print("PC: ", hex(PC))
+    print("DIC: ", hex(DIC))
 
     print("\n")
     print("Used Memory values:\n")
