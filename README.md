@@ -8,28 +8,33 @@ Instruction format: 4 bits OP code, 2 bits rd, 2 bits rs
 
 example: `0000 dd ss`
 
+mc1 for testing purposes(2 lines):
+01011111
+00011010
+
 ## Hash Instruction Ideas
 Note: branch type needs decision and may need increment
+M: might not need
+N: need work on
+l8: need to show memory and add memory content
 
 |Instruction Name |OP code |Description            |
 |-----------------|--------|-----------------------|
-|initl            |00      |Intialize lower 4 bits of a register|
-|initui           |01      |Intialize upper 4 bits of a register|
-|                 |0000    ||
-|                 |0001    ||
+|initlo           |0000    |Intialize lower 4 bits of a register $6(unaddresable)|
+|initui           |0001    |Intialize upper 4 bits of a register $6(unaddresable)|
 |                 |0010    ||
-|sinc2b           |0011    |Stores two bits into mem and then increments address by two|
+|sinc2b  N        |0011    |Stores two bits into mem and then increments address by two|
 |l8               |0100    ||
-|s8               |0101    ||
-|add              |0110    ||
+|s8               |0101    |Just store 8 bits|
+|addu             |0110    ||
 |addiu            |0111    ||
-|and              |1000    ||
+|and     M        |1000    ||
 |xor              |1001    ||
 |andi             |1010    ||
 |bezR0            |1011    ||
 |jmp              |1100    ||
-|Fold             |1101    |Unsigned mult of an A and B into a C, then xor the hi and lo|
-|branch(+)        |1110    |special branch that increments a specific branch register|
+|Fold             |1101    |Unsigned mult of an A and B into a C, then xor the hi and lo. Always performs with $6. |
+|branch(+)        |1110    |special branch that increments a specific branch register, in this case it's A = [1:255]|
 |                 |1111    ||
 
 
