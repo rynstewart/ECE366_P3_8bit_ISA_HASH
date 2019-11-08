@@ -8,23 +8,35 @@ Instruction format: 4 bits OP code, 2 bits rd, 2 bits rs
 
 example: `0000 dd ss`
 
+mc1 for testing purposes(2 lines):
+01011111
+00011010
+
 ## Hash Instruction Ideas
 Note: branch type needs decision and may need increment
+initlo & inithi only work with setting $1
+M: might not need
+N: need work on
+l8: need to show memory and add memory content
 
 |Instruction Name |OP code |Description            |
 |-----------------|--------|-----------------------|
-|initui           |01      |Intialize upper 4 bits of a register|
-|initl            |00      |Intialize lower 4 bits of a register|
-|Fold             |1101    |Unsigned mult of an A and B into a C, then xor the hi and lo|
-|xor              |1001    |
-|sinc2b           |0101    |Stores two bits into mem and then increments address by two|
-|s8b              |0101    |
-|l8b              |0100    |
-|andi             |0111    |
-|srl              |0011    |
-|addiu            |1000    |
-|branch(+)        |1100    |special branch that increments a specific branch register|
-|jmp              |0010    |
+|initlo           |00      |Intialize lower 4 bits of a register $6(unaddresable)|
+|inithi           |10      |Intialize upper 4 bits of a register $6(unaddresable)|
+|                 |0000    ||
+|xor              |0010    ||
+|sinc2b  N        |0011    |Stores two bits into mem and then increments address by two|
+|l8               |0100    ||
+|s8               |0101    |Just store 8 bits|
+|addu             |0110    ||
+|addiu            |0111    ||
+|and1             |1000    ||
+|srl              |1010    |All bits in $3 will be shifted to lower bits |
+|bezR0            |1011    ||
+|jmp              |1100    ||
+|Fold             |1101    |Unsigned mult of an A and B into a C, then xor the hi and lo. Always performs with $6. |
+|branch(+)        |1110    |special branch that increments a specific branch register, in this case it's A = [1:255]|
+|                 |1111    ||
 
 
 ## Work Split
