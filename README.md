@@ -36,7 +36,7 @@ l8: need to show memory and add memory content
 |jmp              |1100    ||
 |Fold             |1101    |Unsigned mult of an A and B into a C, then xor the hi and lo. Always performs with $6. |
 |branch(+)        |1110    |special branch that increments a specific branch register, in this case it's A = [1:255]|
-|                 |1111    ||
+|sub              |1111    ||
 
 
 ## Work Split
