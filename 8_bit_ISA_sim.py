@@ -209,7 +209,8 @@ def main():
 
         elif (line[0:4] == Hash_branch):  # Beq
             DIC += 1
-            if(regval[A] != 255):
+            if(regval[A] != 3):
+                breakpoint()
                 PC = 0
                 lineCount = 0
                 regval[A] += 1

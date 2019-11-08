@@ -1,6 +1,7 @@
 10011111 #1 = F0
 00011010 #1 = FA
 #stuff for setting of loop
+11110000 #C = 0
 11010100 #fold a and b 1st
 11010100 #fold a and b 2nd
 11010100 #fold a and b 3rd
