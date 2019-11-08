@@ -23,7 +23,7 @@ l8: need to show memory and add memory content
 |-----------------|--------|-----------------------|
 |initlo           |00      |Intialize lower 4 bits of a register $6(unaddresable)|
 |inithi           |10      |Intialize upper 4 bits of a register $6(unaddresable)|
-|                 |0000    ||
+|LA               |0000    |load register A into a specified register|
 |xor              |0010    ||
 |sinc2b  N        |0011    |Stores two bits into mem and then increments address by two|
 |l8               |0100    ||
