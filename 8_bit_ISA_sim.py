@@ -27,7 +27,7 @@ def readIn(s):
     text = ""
     with open(s, "r") as f:
         for line in f:
-            if line != "\n":
+            if (line != "\n" and line[0]!='#'):
                 text += line
 
     return text
@@ -67,7 +67,7 @@ def main():
     jmp = "1100"
     Fold = "1101"
     sub = "1111"
-    branch = "1110"
+    Hash_branch = "1110"
 
     while (good_in == False):
 
@@ -121,7 +121,6 @@ def main():
         elif(line[0:4] == addu):
             DIC += 1
             PC += 4
-            #breakpoint()
             regval[int(line[4:6],2)] += abs(regval[int(line[6:8],2)])
             
             f.write('Operation: $' + str(int(line[5:6])) + ' = ' + str(regval[int(line[5:6])]) + '; ' + '\n')
@@ -131,7 +130,6 @@ def main():
         elif(line[0:4] == sub):
             DIC += 1
             PC += 4
-            #breakpoint()
             regval[int(line[4:6],2)] -= regval[int(line[6:8],2)]
             
             f.write('Operation: $' + str(int(line[5:6])) + ' = ' + str(regval[int(line[5:6])]) + '; ' + '\n')
@@ -209,20 +207,16 @@ def main():
             f.write('PC is now at ' + str(PC) + '\n')
             f.write('Registers that have changed: ' + '$' + str(reg) + ' = ' + str(imm) + '\n')
 
-        elif (line[0:5] == bezR0):  # Beq
+        elif (line[0:4] == Hash_branch):  # Beq
             DIC += 1
-            try:
-                imm = int(line[5:7], 16)
-            except:
-                f.write("ERROR: Invalid Instruction")
-                break
-            if (regval[0] == 0):
-                PC = PC + (4 * imm)
-                lineCount = lineCount + imm
+            if(regval[A] != 255):
+                PC = 0
+                lineCount = 0
+                regval[A] += 1
                 f.write('PC is now at ' + str(PC) + '\n')
                 f.write('No Registers have changed. \n')
                 continue
-            f.write('No Registers have changed. \n')
+            f.write('Branch not taken, no Registers have changed. \n')
             PC += 4
 
 
@@ -262,14 +256,13 @@ def main():
     print("\n")
     print("Used Memory values:\n")
     print("            ", end="")
-    for x in range(0, 4, 1):
-        print("0b" + format((x * 2), "02b"), end=" ")
+    #for x in range(0, 4, 1):
+     #   print("0b" + format((x * 2), "02b"), end=" ")
     print("\n")
-    print("--------------------------------------------------------------------------------------------------", end="")
+    print("---------------------------------------------------------------------", end="")
     count = 0
     print("\n")
-    for x in range(0x0000, 0x000C, 1):
-        #breakpoint()
+    for x in range(0x0000, 64, 1):
         x = x*4
         print("0b", end="")
         for y in range(3, -1, -1):
@@ -294,6 +287,7 @@ def main():
             count = 0
             print("\n")
         '''
+    breakpoint()
 
     f.close()
 

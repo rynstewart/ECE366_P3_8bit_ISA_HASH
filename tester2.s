@@ -30,8 +30,10 @@
 
 #storing
 00110000
-01100001 #C + $1 = 2
-00110000
+
+#branching
+11110101 #$1 = 0
+11100000 #special branch (if A is != 255 then A++ and jump to line 0)
 
 
 
