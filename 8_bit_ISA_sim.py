@@ -35,19 +35,16 @@ def readIn(s):
 
 def main():
     # starting with 100 spots in MEM
-    MEM = [0] * 256
-    labelIndex = []
-    labelName = []
-    labelAddr = []
+    MEM = [0] * 300
     regName = []
     PC = 0
     DIC = 0
     regNameInit(regName)
-    regval = [0] * 6  # 0-3, A, lo and hi
-    A = 4
+    regval = [0] * 7  # 0-3, A, lo and hi
+    LO = 4
+    HI = 5
+    A = 6
     regval[A] = 1
-    LO = 5
-    HI = 6
     good_in = False
     mem_addr = 0x0000
 
@@ -68,6 +65,7 @@ def main():
     Fold = "1101"
     sub = "1111"
     Hash_branch = "1110"
+    LA = "0000"
 
     while (good_in == False):
 
@@ -117,6 +115,14 @@ def main():
             mem_addr += 1
             f.write('Operation: MEM[$' + line[7:8] + '] = ' + line[5:6] + '; ' + '\n')
             f.write('PC is now at ' + str(PC) + '\n')
+        
+        elif(line[0:4] == LA):
+            DIC += 1
+            PC += 4
+            regval[int(line[6:8],2)] = regval[A]
+            f.write('Operation: $' + str(int(line[6:8])) + ' = ' + str(regval[int(line[6:8])]) + '; ' + '\n')
+            f.write('PC is now at ' + str(PC) + '\n')
+            f.write('DIC is now at '+str(DIC))
 
         elif(line[0:4] == addu):
             DIC += 1
@@ -177,10 +183,11 @@ def main():
             #Always comes out from C = $0
             DIC += 1
             PC += 4
-            result = regval[1] * regval[A]
+            result = regval[int(line[4:6],2)] * regval[int(line[6:8],2)]
             tempL = result & 0b11111111
             tempH = result >> 8
-            regval[0] = tempH ^ tempL
+            regval[int(line[6:8],2)] = tempH ^ tempL
+            breakpoint()
             f.write('Operation: $' + str(0) + ' = ' + str(regval[0]) + '; ' + '\n')
             f.write('PC is now at ' + str(PC) + '\n')
             f.write('DIC is now at '+str(DIC))
@@ -207,10 +214,9 @@ def main():
             f.write('PC is now at ' + str(PC) + '\n')
             f.write('Registers that have changed: ' + '$' + str(reg) + ' = ' + str(imm) + '\n')
 
-        elif (line[0:4] == Hash_branch):  # Beq
+        elif (line[0:4] == Hash_branch):
             DIC += 1
-            if(regval[A] != 3):
-                breakpoint()
+            if(regval[A] != 255):
                 PC = 0
                 lineCount = 0
                 regval[A] += 1
@@ -263,7 +269,7 @@ def main():
     print("---------------------------------------------------------------------", end="")
     count = 0
     print("\n")
-    for x in range(0x0000, 64, 1):
+    for x in range(0, 17, 1):
         x = x*4
         print("0b", end="")
         for y in range(3, -1, -1):
@@ -288,7 +294,6 @@ def main():
             count = 0
             print("\n")
         '''
-    breakpoint()
 
     f.close()
 

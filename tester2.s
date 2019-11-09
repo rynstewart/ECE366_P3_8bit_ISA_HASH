@@ -2,6 +2,8 @@
 00011010 #1 = FA
 #stuff for setting of loop
 11110000 #C = 0
+#load a into
+00000000
 11010100 #fold a and b 1st
 11010100 #fold a and b 2nd
 11010100 #fold a and b 3rd
@@ -34,6 +36,7 @@
 
 #branching
 11110101 #$1 = 0
+#need to load value of A into a register then pass the register
 11100000 #special branch (if A is != 255 then A++ and jump to line 0)
 
 
