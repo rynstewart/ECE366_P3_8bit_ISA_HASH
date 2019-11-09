@@ -253,20 +253,20 @@ def main():
         lineCount += 1
 
 
-    f.write("REGISTERS:")
-    f.write("-----------")
+    f.write("\nREGISTERS:\n")
+    f.write("-----------\n")
 
     for x in range(len(regval)):
         if (x == LO):
-            f.write("LO: " + str(hex(regval[x])))
+            f.write("LO: " + str(hex(regval[x]))+'\n')
         elif (x == HI):
-            f.write("HI: " + str(hex(regval[x])))
+            f.write("HI: " + str(hex(regval[x]))+'\n')
         elif (x == A):
-            f.write("A: " + str(hex(regval[x])))
+            f.write("A: " + str(hex(regval[x]))+'\n')
         else:
-            f.write("$"+ str(x) + ": " + str(hex(regval[x])))
-    f.write("PC: " + str(hex(PC)))
-    f.write("DIC: " + str(hex(DIC)))
+            f.write("$"+ str(x) + ": " + str(hex(regval[x]))+'\n')
+    f.write("PC: " + str(hex(PC))+'\n')
+    f.write("DIC: " + str(hex(DIC))+'\n')
 
     f.write("\n")
     f.write("USED MEMORY VALUES:\n")
