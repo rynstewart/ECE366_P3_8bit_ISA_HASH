@@ -24,7 +24,7 @@ and 1001  aren't usable because of this.
 |LA               |0000    |Loads special register A ($6) into specified register since register A is not addressable|
 |xor              |0010    ||
 |sinc2b           |0011    |Stores two bits into mem and then increments address by two|
-|pat_Count        |0101    |Just store 8 bits|
+|pat_Count        |0101    |Counts the number of times 00, 01, 10, 11 appear|
 |addu             |0110    ||
 |and1             |1000    ||
 |srl              |1010    |All bits in $3 will be shifted to lower bits |
