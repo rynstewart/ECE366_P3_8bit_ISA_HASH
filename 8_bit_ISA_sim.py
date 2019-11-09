@@ -71,7 +71,7 @@ def main():
             print("Bye!")
             return
         if (file_Name == ""):
-            file_Name = "test.asm"
+            file_Name = "FA_mc.txt"
         try:
             f = open(file_Name)
             f.close()
