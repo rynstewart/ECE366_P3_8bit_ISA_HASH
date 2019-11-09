@@ -11,8 +11,8 @@ def saveJumpLabel(asm, labelIndex, labelName, labelAddr):
     for item in range(asm.count('\n')):  # Remove all empty lines '\n'
         asm.remove('\n')
 
-
-def regNameInit(regName):
+#setting ip registers
+def regNameInit(regName): 
     i = 0
     while (i <= 4):
         regName.append(str(i))
@@ -20,6 +20,7 @@ def regNameInit(regName):
     regName.append('lo')
     regName.append('hi')
 
+#created list to read non empty and un commented lines
 def splitText(text):
     return text.split("\n")
 
@@ -34,8 +35,8 @@ def readIn(s):
 
 
 def main():
-    # starting with 100 spots in MEM
-    MEM = [0] * 300
+    # starting with 259 spots in MEM
+    MEM = [0] * 259
     regName = []
     PC = 0
     DIC = 0
@@ -48,10 +49,9 @@ def main():
     good_in = False
     mem_addr = 0x0004
 
-
-    #TODO: update op code to same bits
+    #op code declarations
     initlo = "00"
-    inithi = "10"  # has to be checked after ld and st(last ones)
+    inithi = "10"  # has to be checked before ld and st(last ones)
     xor = "0010"
     sinc2b = "0011"
     addu = "0110"
@@ -63,6 +63,7 @@ def main():
     LA = "0000"
     pat_Count = "0101"
 
+    #bit of UI
     while (good_in == False):
 
         file_Name = input("Please type file name, enter for default, or q to quit:\n")
@@ -88,7 +89,9 @@ def main():
     while (lineCount < len(t)):
 
         line = t[lineCount]
-
+        
+        
+        #starting to print to output.txt
         f.write('------------------------------ \n')
         if (not (':' in line)):
             f.write('MIPS Instruction: ' + line + '\n')
@@ -101,59 +104,78 @@ def main():
             PC += 4
             RT = regval[int(line[6:8], 2)]
 
-            regval[3] = regval[int(line[4:6])] >> RT
+            regval[3] = regval[int(line[4:6],2)] >> RT
+
+            f.write('Operation: $' + str(int(line[6:8],2)) + ' = ' + str(regval[int(line[6:8],2)]) + '; ' + '\n')
+            f.write('PC is now at ' + str(PC) + '\n')
+            f.write('DIC is now at '+str(DIC))
         
+        #this branch does pattern count by using 4 different
+        #if statements, it was implemented in hardware using Muxes
         elif(line[0:4] == pat_Count):
             DIC += 1
             PC += 4
             pattern = regval[int(line[6:8],2)]
             if(pattern == 0):
                 MEM[0] += 1
+                y = 0
 
-            if(pattern == 1):
+            elif(pattern == 1):
                 MEM[1] += 1
+                y = 1
 
-            if(pattern == 2):
+            elif(pattern == 2):
                 MEM[2] += 1
+                y = 2
 
-            if(pattern == 3):
+            elif(pattern == 3):
                 MEM[3] += 1
+                y = 3
+            
+            
+            f.write('Operation: MEM[+'+str(y)+'] = ' + str(regval[int(line[6:8],2)]) + '\n')
+            f.write('PC is now at ' + str(PC) + '\n')
+            f.write('DIC is now at '+str(DIC))
 
 
         elif (line[0:4] == sinc2b):
             DIC += 1
             PC += 4
-            X = regval[int(line[4:6])]
+            X = regval[int(line[6:8],2)]
             MEM[mem_addr] = X
             mem_addr += 1
-            f.write('Operation: MEM[$' + line[7:8] + '] = ' + line[5:6] + '; ' + '\n')
+            f.write('Operation: MEM[$' + str(mem_addr-1) + '] = ' + str(regval[int(line[6:8],2)]) + '; ' + '\n')
             f.write('PC is now at ' + str(PC) + '\n')
+            f.write('DIC is now at '+str(DIC))
         
+        #This instuction will load the unaddressable register A into an addressable register
         elif(line[0:4] == LA):
             DIC += 1
             PC += 4
             regval[int(line[6:8],2)] = regval[A]
-            f.write('Operation: $' + str(int(line[6:8])) + ' = ' + str(regval[int(line[6:8])]) + '; ' + '\n')
+            f.write('Operation: $' + str(int(line[6:8],2)) + ' = ' + str(regval[int(line[6:8],2)]) + '; ' + '\n')
             f.write('PC is now at ' + str(PC) + '\n')
             f.write('DIC is now at '+str(DIC))
 
+        # addu not really implemented, but in theory in should be, 
+        # however we wrote the input so it doesn't cause any issues
+        # at the moment
         elif(line[0:4] == addu):
             DIC += 1
             PC += 4
-            #if(regval[A]==2):
-             #   breakpoint()
             regval[int(line[4:6],2)] += regval[int(line[6:8],2)]
             
-            f.write('Operation: $' + str(int(line[5:6])) + ' = ' + str(regval[int(line[5:6])]) + '; ' + '\n')
+            f.write('Operation: $' + str(int(line[4:6],2)) + ' = ' + str(regval[int(line[4:6],2)]) + '; ' + '\n')
             f.write('PC is now at ' + str(PC) + '\n')
             f.write('DIC is now at '+str(DIC))
 
+        #this instruction is mainly used for setting equal to 0
         elif(line[0:4] == sub):
             DIC += 1
             PC += 4
             regval[int(line[4:6],2)] -= regval[int(line[6:8],2)]
             
-            f.write('Operation: $' + str(int(line[5:6])) + ' = ' + str(regval[int(line[5:6])]) + '; ' + '\n')
+            f.write('Operation: $' + str(int(line[4:6],2)) + ' = ' + str(regval[int(line[4:6],2)]) + '; ' + '\n')
             f.write('PC is now at ' + str(PC) + '\n')
             f.write('DIC is now at '+str(DIC))
 
@@ -162,49 +184,58 @@ def main():
             DIC += 1
             PC += 4
             regval[int(line[4:6],2)] = regval[int(line[4:6],2)] & regval[int(line[6:8],2)]
-            f.write('Operation: MEM[$' + line[5:6] + '] = ' + line[7:8] + '; ' + '\n')
+            f.write('Operation: $' + str(int(line[4:6],2)) + ' = ' + str(regval[int(line[4:6],2)]) + '; ' + '\n')
+            f.write('PC is now at ' + str(PC) + '\n')
+            f.write('DIC is now at '+str(DIC))
 
         # xor
         elif (line[0:4] == xor):
             DIC += 1
             PC += 4
             regval[0] = regval[int(line[4:6],2)] ^ regval[int(line[6:8],2)]
+            f.write('Operation: $0 = ' + str(regval[0]) + '; ' + '\n')
+            f.write('PC is now at ' + str(PC) + '\n')
+            f.write('DIC is now at '+ str(DIC))
 
-
+        #Fold
         elif (line[0:4] == Fold):
             #Always comes out from C = $0
             DIC += 1
             PC += 4
             result = regval[int(line[4:6],2)] * regval[int(line[6:8],2)]
-            tempL = result & 0b11111111
-            tempH = result >> 8
-            regval[int(line[6:8],2)] = tempH ^ tempL
+            regval[LO] = result & 0b11111111
+            regval[HI] = result >> 8
+            regval[int(line[6:8],2)] = regval[HI] ^ regval[LO]
             f.write('Operation: $' + str(0) + ' = ' + str(regval[0]) + '; ' + '\n')
             f.write('PC is now at ' + str(PC) + '\n')
             f.write('DIC is now at '+str(DIC))
 
-        #initli: lower 4
+        #initli: lower 4 bit intialization (only usable with $1)
         elif (line[0:2] == initlo):
             DIC += 1
             PC += 4
             reg = int(line[2:4], 2)
             imm = int(line[4:8], 2)
             regval[reg] += imm
-            f.write('Operation: $' + str(reg) + ' = ' + str(imm) + '; ' + '\n')
+            f.write('Operation: $' + str(reg) + ' lower 4 bits = ' + str(imm) + '; ' + '\n')
             f.write('PC is now at ' + str(PC) + '\n')
-            f.write('Registers that have changed: ' + '$' + str(reg) + ' = ' + str(imm) + '\n')
+            f.write('DIC is now at '+str(DIC))
 
-        #initui: upper 4
+        #initui: upper 4 bit intialization (only usable with $1)
         elif (line[0:2] == inithi):
             DIC += 1
             PC += 4
             reg = int(line[2:4], 2)
             imm = int(line[4:8], 2)
             regval[reg] += imm << 4
-            f.write('Operation: $' + str(reg) + ' = ' + str(imm) + '; ' + '\n')
+            f.write('Operation: $' + str(reg) + ' upper 4 bits = ' + str(imm) + '; ' + '\n')
             f.write('PC is now at ' + str(PC) + '\n')
             f.write('Registers that have changed: ' + '$' + str(reg) + ' = ' + str(imm) + '\n')
+            f.write('DIC is now at '+str(DIC))
 
+        # Specific branch function to be used with hash only
+        # it loops back to the first line of the code and 
+        # increments contents of register A till it's 255
         elif (line[0:4] == Hash_branch):
             DIC += 1
             if(regval[A] != 255):
@@ -212,69 +243,48 @@ def main():
                 lineCount = 0
                 regval[A] += 1
                 f.write('PC is now at ' + str(PC) + '\n')
-                f.write('No Registers have changed. \n')
+                f.write('Branch Taken. No Registers have changed. \n')
+                f.write('DIC is now at '+str(DIC))
                 continue
             f.write('Branch not taken, no Registers have changed. \n')
+            f.write('DIC is now at '+str(DIC))
             PC += 4
 
         lineCount += 1
 
 
-    print("REGISTERS:")
-    print("-----------")
+    f.write("REGISTERS:")
+    f.write("-----------")
 
     for x in range(len(regval)):
         if (x == LO):
-            print("LO: ", hex(regval[x]))
+            f.write("LO: " + str(hex(regval[x])))
         elif (x == HI):
-            print("HI: ", hex(regval[x]))
+            f.write("HI: " + str(hex(regval[x])))
         elif (x == A):
-            print("A: ", hex(regval[x]))
+            f.write("A: " + str(hex(regval[x])))
         else:
-            print("$", x, ": ", hex(regval[x]))
-    print("PC: ", hex(PC))
-    print("DIC: ", hex(DIC))
+            f.write("$"+ str(x) + ": " + str(hex(regval[x])))
+    f.write("PC: " + str(hex(PC)))
+    f.write("DIC: " + str(hex(DIC)))
 
-    print("\n")
-    print("Used Memory values:\n")
-    print("            ", end="")
-    #for x in range(0, 4, 1):
-     #   print("0b" + format((x * 2), "02b"), end=" ")
-    print("\n")
-    print("---------------------------------------------------------------------", end="")
-    count = 0
-    print("\n")
-    for x in range(4, 1017, 1):
-        x = x*4
-        print("0b", end="")
-        for y in range(3, -1, -1):
-           # z = (y + x)*4
-            print(format(MEM[y + x], "02b"), end="")
-        print(" ", end="")
-        count += 1
-        if (count == 4):
-            count = 0
-            print("\n")
-        x = x/4
+    f.write("\n")
+    f.write("USED MEMORY VALUES:\n")
+    f.write("---------------------------------------------------------------------\n")
+    for x in range(4, len(MEM), 1):
+        f.write("At " + str(x) + "\tA = " + str(x-3) +"\tC = "+ str(MEM[x]) + "  ")
+        if (x - 3) % 4 == 0:
+            f.write("\n")
+
+    f.write("\n")
     
-    print("MODES OF 2 BIT BINARY RESULTS (in hex)\n")
-    print("----------------------------------------")
+    f.write("\nMODES OF 2 BIT BINARY RESULTS (in decimal)\n")
+    f.write("----------------------------------------")
     for x in range (0,4,1):
-        print("\nMem["+str(x)+"] = ", end="")
-        print(format(MEM[x], "02x"))
-       
-        '''
-        if ((x - 0x3) % 0x20 == 0):
-            print("0x" + format(x - 0x3, "08x") + '|', end=" ")
-        print("0x", end="")
-        for y in range(0, 4, 1):
-            print(format(MEM[x - y], "02x"), end="")
-        print(" ", end="")
-        count += 1
-        if (count == 8):
-            count = 0
-            print("\n")
-        '''
+        f.write("\nMem["+str(x)+"] = ")
+        f.write(str(MEM[x]))
+
+    f.write("\n")
 
     f.close()
 
