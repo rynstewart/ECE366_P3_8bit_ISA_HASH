@@ -55,7 +55,6 @@ def main():
     xor = "0010"
     sinc2b = "0011"
     addu = "0110"
-    addiu = "0111"
     and1 = "1000"
     srl = "1010"
     Fold = "1101"
