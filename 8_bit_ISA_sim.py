@@ -46,7 +46,7 @@ def main():
     A = 6
     regval[A] = 1
     good_in = False
-    mem_addr = 0x0000
+    mem_addr = 0x0004
 
 
     #TODO: update op code to same bits
@@ -54,18 +54,15 @@ def main():
     inithi = "10"  # has to be checked after ld and st(last ones)
     xor = "0010"
     sinc2b = "0011"
-    l8 = "0100"
-    s8 = "0101"
     addu = "0110"
     addiu = "0111"
     and1 = "1000"
     srl = "1010"
-    bezR0 = "1011"
-    jmp = "1100"
     Fold = "1101"
     sub = "1111"
     Hash_branch = "1110"
     LA = "0000"
+    pat_Count = "0101"
 
     while (good_in == False):
 
@@ -106,6 +103,23 @@ def main():
             RT = regval[int(line[6:8], 2)]
 
             regval[3] = regval[int(line[4:6])] >> RT
+        
+        elif(line[0:4] == pat_Count):
+            DIC += 1
+            PC += 4
+            pattern = regval[int(line[6:8],2)]
+            if(pattern == 0):
+                MEM[0] += 1
+
+            if(pattern == 1):
+                MEM[1] += 1
+
+            if(pattern == 2):
+                MEM[2] += 1
+
+            if(pattern == 3):
+                MEM[3] += 1
+
 
         elif (line[0:4] == sinc2b):
             DIC += 1
@@ -144,13 +158,6 @@ def main():
             f.write('PC is now at ' + str(PC) + '\n')
             f.write('DIC is now at '+str(DIC))
 
-        # addiu
-        elif (line[0:4] == addiu):
-            DIC += 1
-            PC += 4
-            regval[int(line[5:6])] = regval[int(line[5:6])] + regval[int(line[6:8],2)]
-            f.write('Operation: MEM[$' + line[1] + '] = ' + line[0] + '; ' + '\n')
-
         #andi
         elif(line[0:4] == and1):
             DIC += 1
@@ -164,22 +171,6 @@ def main():
             PC += 4
             regval[0] = regval[int(line[4:6],2)] ^ regval[int(line[6:8],2)]
 
-        elif (line[0:4] == l8):
-            DIC += 1
-            PC += 4
-            regval[int(line[4:6], 2)] = MEM[regval[int(line[6:8], 2)]]
-            f.write('Operation: $' + str(int(line[5:6], 2)) + ' = ' + 'MEM[$' + str(int(line[7:8], 2)) + ']; ' + '\n')
-            f.write('PC is now at ' + str(PC) + '\n')
-            f.write('Registers that have changed: ' + '$' + str(int(line[5:6], 2)) + ' = ' + str(regval[int(line[5:6])]) + '\n')
-
-        elif (line[0:4] == s8):
-            DIC += 1
-            PC += 4
-            X = regval[int(line[4:6], 2)]
-            MEM[regval[int(line[6:8], 2)]] = X
-            f.write('Operation: MEM[' + str(MEM[regval[int(line[6:], 2)]]) + '] = ' + str(X) + '; ' + '\n')
-            f.write('PC is now at ' + str(PC) + '\n')
-            # ask about regs that changed
 
         elif (line[0:4] == Fold):
             #Always comes out from C = $0
@@ -227,22 +218,6 @@ def main():
             f.write('Branch not taken, no Registers have changed. \n')
             PC += 4
 
-
-        elif (line[0:3] == "jmp"):  # jmp
-            DIC += 1
-            line = line.replace("jmp", "")
-            line = line.split(",")
-            try:
-                imm = int(line[0], 16)
-            except:
-                f.write("ERROR: Invalid Instruction")
-                break
-            PC = PC + (4 * imm)
-            lineCount = lineCount + imm
-            f.write('PC is now at ' + str(PC) + '\n')
-            f.write('No Registers have changed. \n')
-            continue
-
         lineCount += 1
 
 
@@ -270,7 +245,7 @@ def main():
     print("---------------------------------------------------------------------", end="")
     count = 0
     print("\n")
-    for x in range(0, 17, 1):
+    for x in range(4, 1017, 1):
         x = x*4
         print("0b", end="")
         for y in range(3, -1, -1):
@@ -282,7 +257,13 @@ def main():
             count = 0
             print("\n")
         x = x/4
-
+    
+    print("MODES OF 2 BIT BINARY RESULTS (in hex)\n")
+    print("----------------------------------------")
+    for x in range (0,4,1):
+        print("\nMem["+str(x)+"] = ", end="")
+        print(format(MEM[x], "02x"))
+       
         '''
         if ((x - 0x3) % 0x20 == 0):
             print("0x" + format(x - 0x3, "08x") + '|', end=" ")
