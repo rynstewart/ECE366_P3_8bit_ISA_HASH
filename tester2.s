@@ -3,7 +3,7 @@
 #stuff for setting of loop
 11110000 #C = 0
 #load a into
-00000000
+00000000 #C =A
 11010100 #fold a and b 1st
 11010100 #fold a and b 2nd
 11010100 #fold a and b 3rd
@@ -13,6 +13,7 @@
 #down to 4 bits
 11110101 #$1 = $1-$1 = 0
 00011111 #$1 = 0F
+11111010 #$2 = 0
 01101000 #$2 = $2 + $0 (C)
 10001001 #$2 = lower 4 bits of C
 11110101 #$1 = $1-$1 = 0

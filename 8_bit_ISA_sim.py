@@ -127,7 +127,9 @@ def main():
         elif(line[0:4] == addu):
             DIC += 1
             PC += 4
-            regval[int(line[4:6],2)] += abs(regval[int(line[6:8],2)])
+            #if(regval[A]==2):
+             #   breakpoint()
+            regval[int(line[4:6],2)] += regval[int(line[6:8],2)]
             
             f.write('Operation: $' + str(int(line[5:6])) + ' = ' + str(regval[int(line[5:6])]) + '; ' + '\n')
             f.write('PC is now at ' + str(PC) + '\n')
@@ -187,7 +189,6 @@ def main():
             tempL = result & 0b11111111
             tempH = result >> 8
             regval[int(line[6:8],2)] = tempH ^ tempL
-            breakpoint()
             f.write('Operation: $' + str(0) + ' = ' + str(regval[0]) + '; ' + '\n')
             f.write('PC is now at ' + str(PC) + '\n')
             f.write('DIC is now at '+str(DIC))
