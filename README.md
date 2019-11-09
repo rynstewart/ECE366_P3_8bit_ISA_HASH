@@ -14,29 +14,22 @@ mc1 for testing purposes(2 lines):
 
 ## Hash Instruction Ideas
 Note: branch type needs decision and may need increment
-initlo & inithi only work with setting $1
-M: might not need
-N: need work on
-l8: need to show memory and add memory content
+initlo & inithi only work with setting $1. OP codes 0001
+and 1001  aren't usable because of this. 
 
 |Instruction Name |OP code |Description            |
 |-----------------|--------|-----------------------|
-|initlo           |00      |Intialize lower 4 bits of a register $6(unaddresable)|
-|inithi           |10      |Intialize upper 4 bits of a register $6(unaddresable)|
-|LA               |0000    |load register A into a specified register|
+|initlo           |00      |Intialize lower 4 bits of register 1|
+|inithi           |10      |Intialize upper 4 bits of a register 1|
+|LA               |0000    |Loads special register A ($6) into specified register since register A is not addressable|
 |xor              |0010    ||
-|sinc2b  N        |0011    |Stores two bits into mem and then increments address by two|
-|l8               |0100    ||
-|s8               |0101    |Just store 8 bits|
+|sinc2b           |0011    |Stores two bits into mem and then increments address by two|
+|pat_Count        |0101    |Counts the number of times 00, 01, 10, 11 appear|
 |addu             |0110    ||
-|addiu            |0111    ||
 |and1             |1000    ||
 |srl              |1010    |All bits in $3 will be shifted to lower bits |
-|bezR0            |1011    ||
-|jmp              |1100    ||
+|Hash_branch      |1110    |special branch that increments a specific branch register, in this case it's A = [1:255]|
 |Fold             |1101    |Unsigned mult of an A and B into a C, then xor the hi and lo. Always performs with $6. |
-|branch(+)        |1110    |special branch that increments a specific branch register, in this case it's A = [1:255]|
-|                 |1111    ||
 
 
 ## Work Split

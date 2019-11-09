@@ -2,6 +2,8 @@
 00011010 #1 = FA
 #stuff for setting of loop
 11110000 #C = 0
+#load a into
+00000000 #C =A
 11010100 #fold a and b 1st
 11010100 #fold a and b 2nd
 11010100 #fold a and b 3rd
@@ -11,6 +13,7 @@
 #down to 4 bits
 11110101 #$1 = $1-$1 = 0
 00011111 #$1 = 0F
+11111010 #$2 = 0
 01101000 #$2 = $2 + $0 (C)
 10001001 #$2 = lower 4 bits of C
 11110101 #$1 = $1-$1 = 0
@@ -26,14 +29,18 @@
 10001001 #$2 = lower 2 bits of C
 11110101 #$1 = $1-$1 = 0
 00010010 #$1 = 2
-10100001 #$3 = upper 2 bits
+10100001 #$3 =0 upper 2 bits
 00101011 #C = $3 xor $2
+
+#pattern match
+01010000
 
 #storing
 00110000
 
 #branching
 11110101 #$1 = 0
+#need to load value of A into a register then pass the register
 11100000 #special branch (if A is != 255 then A++ and jump to line 0)
 
 
