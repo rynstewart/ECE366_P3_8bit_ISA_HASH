@@ -209,6 +209,24 @@ def main():
             f.write('Operation: $' + str(0) + ' = ' + str(regval[0]) + '; ' + '\n')
             f.write('PC is now at ' + str(PC) + '\n')
             f.write('DIC is now at '+str(DIC))
+        
+        
+        # Specific branch function to be used with hash only
+        # it loops back to the first line of the code and 
+        # increments contents of register A till it's 255
+        elif (line[0:4] == Hash_branch):
+            DIC += 1
+            if(regval[A] != 255):
+                PC = 0
+                lineCount = 0
+                regval[A] += 1
+                f.write('PC is now at ' + str(PC) + '\n')
+                f.write('Branch Taken. No Registers have changed. \n')
+                f.write('DIC is now at '+str(DIC))
+                continue
+            f.write('Branch not taken, no Registers have changed. \n')
+            f.write('DIC is now at '+str(DIC))
+            PC += 4
 
         #initli: lower 4 bit intialization (only usable with $1)
         elif (line[0:2] == initlo):
@@ -233,40 +251,23 @@ def main():
             f.write('Registers that have changed: ' + '$' + str(reg) + ' = ' + str(imm) + '\n')
             f.write('DIC is now at '+str(DIC))
 
-        # Specific branch function to be used with hash only
-        # it loops back to the first line of the code and 
-        # increments contents of register A till it's 255
-        elif (line[0:4] == Hash_branch):
-            DIC += 1
-            if(regval[A] != 255):
-                PC = 0
-                lineCount = 0
-                regval[A] += 1
-                f.write('PC is now at ' + str(PC) + '\n')
-                f.write('Branch Taken. No Registers have changed. \n')
-                f.write('DIC is now at '+str(DIC))
-                continue
-            f.write('Branch not taken, no Registers have changed. \n')
-            f.write('DIC is now at '+str(DIC))
-            PC += 4
-
         lineCount += 1
 
 
-    f.write("REGISTERS:")
-    f.write("-----------")
+    f.write("\nREGISTERS:\n")
+    f.write("-----------\n")
 
     for x in range(len(regval)):
         if (x == LO):
-            f.write("LO: " + str(hex(regval[x])))
+            f.write("LO: " + str(hex(regval[x]))+'\n')
         elif (x == HI):
-            f.write("HI: " + str(hex(regval[x])))
+            f.write("HI: " + str(hex(regval[x]))+'\n')
         elif (x == A):
-            f.write("A: " + str(hex(regval[x])))
+            f.write("A: " + str(hex(regval[x]))+'\n')
         else:
-            f.write("$"+ str(x) + ": " + str(hex(regval[x])))
-    f.write("PC: " + str(hex(PC)))
-    f.write("DIC: " + str(hex(DIC)))
+            f.write("$"+ str(x) + ": " + str(hex(regval[x]))+'\n')
+    f.write("PC: " + str(hex(PC))+'\n')
+    f.write("DIC: " + str(hex(DIC))+'\n')
 
     f.write("\n")
     f.write("USED MEMORY VALUES:\n")
